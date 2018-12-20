@@ -7,8 +7,9 @@ import datetime
 
 
 def parse(source, destination, date):
-    for i in range(30):
-        date1 = (datetime.datetime.today() + datetime.timedelta(days=30)).strftime("%m/%d/%Y")
+    lists = []
+    for j in range(30):
+        date1 = (datetime.datetime.today() + datetime.timedelta(days=j)).strftime("%m/%d/%Y")
         print (date1)
         try:
             url = "https://www.expedia.com/Flights-Search?trip=oneway&leg1=from:{0},to:{1},departure:{2}TANYT&passengers=adults:1,children:0,seniors:0,infantinlap:Y&options=cabinclass%3Aeconomy&mode=search&origref=www.expedia.com".format(
@@ -21,82 +22,30 @@ def parse(source, destination, date):
             raw_json = json.loads(json_data_xpath[0] if json_data_xpath else '')
             flight_data = json.loads(raw_json["content"])
 
-            lists = []
-
             for i in flight_data['legs'].keys():
-                total_distance = flight_data['legs'][i].get("formattedDistance", '')
                 exact_price = flight_data['legs'][i].get('price', {}).get('totalPriceAsDecimal', '')
-
-                departure_location_airport = flight_data['legs'][i].get('departureLocation', {}).get('airportLongName',
-                                                                                                     '')
-                departure_location_city = flight_data['legs'][i].get('departureLocation', {}).get('airportCity', '')
-                departure_location_airport_code = flight_data['legs'][i].get('departureLocation', {}).get('airportCode',
-                                                                                                          '')
-
-                arrival_location_airport = flight_data['legs'][i].get('arrivalLocation', {}).get('airportLongName', '')
-                arrival_location_airport_code = flight_data['legs'][i].get('arrivalLocation', {}).get('airportCode', '')
-                arrival_location_city = flight_data['legs'][i].get('arrivalLocation', {}).get('airportCity', '')
-                airline_name = flight_data['legs'][i].get('carrierSummary', {}).get('airlineName', '')
-
                 no_of_stops = flight_data['legs'][i].get("stops", "")
-                flight_duration = flight_data['legs'][i].get('duration', {})
-                flight_hour = flight_duration.get('hours', '')
-                flight_minutes = flight_duration.get('minutes', '')
-                flight_days = flight_duration.get('numOfDays', '')
-
                 if no_of_stops == 0:
                     stop = "Nonstop"
                 else:
                     continue
-
-                total_flight_duration = "{0} days {1} hours {2} minutes".format(flight_days, flight_hour,
-                                                                                flight_minutes)
-                departure = departure_location_airport + ", " + departure_location_city
-                arrival = arrival_location_airport + ", " + arrival_location_city
-                carrier = flight_data['legs'][i].get('timeline', [])[0].get('carrier', {})
-                plane = carrier.get('plane', '')
-                plane_code = carrier.get('planeCode', '')
                 formatted_price = "{0:.2f}".format(exact_price)
-
-                # if not airline_name:
-                #     airline_name = carrier.get('operatedBy', '')
-                #
-                # timings = []
-                # for timeline in flight_data['legs'][i].get('timeline', {}):
-                #     if 'departureAirport' in timeline.keys():
-                #         departure_airport = timeline['departureAirport'].get('longName', '')
-                #         departure_time = timeline['departureTime'].get('time', '')
-                #         arrival_airport = timeline.get('arrivalAirport', {}).get('longName', '')
-                #         arrival_time = timeline.get('arrivalTime', {}).get('time', '')
-                #         flight_timing = {
-                #             'departure_airport': departure_airport,
-                #             'departure_time': departure_time,
-                #             'arrival_airport': arrival_airport,
-                #             'arrival_time': arrival_time
-                #         }
-                #         timings.append(flight_timing)
-
-                # flight_info = {'stops': stop,
-                #                'ticket price': formatted_price,
-                #                'departure': departure,
-                #                'arrival': arrival,
-                #                'flight duration': total_flight_duration,
-                #                'airline': airline_name,
-                #                'plane': plane,
-                #                'timings': timings,
-                #                'plane code': plane_code
-                #                }
                 flight_info = {
-                    'date': date1,
-                    'ticket price': formatted_price
+                    'ticket price': formatted_price,
+                    'date': date1
                 }
-                lists += flight_info
+                lists.append(flight_info)
+                break
+            sortedlist = sorted(lists, key=lambda k: k['date'], reverse=False)
+            if j >= 29:
+                print sortedlist
+                return sortedlist
 
         except ValueError:
             print ("Rerying...")
 
-    sortedlist = sorted(lists, key=lambda k: k['ticket price'], reverse=False)
-    return sortedlist
+    # print sortedlist
+    # return sortedlist
 
 
 if __name__ == "__main__":
