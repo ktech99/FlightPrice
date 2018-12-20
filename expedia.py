@@ -32,7 +32,8 @@ def parse(source, destination, date):
                 formatted_price = "{0:.2f}".format(exact_price)
                 flight_info = {
                     'ticket price': formatted_price,
-                    'date': date1
+                    'date': date1,
+                    'day': (datetime.datetime.today() + datetime.timedelta(days=j)).strftime("%A")
                 }
                 lists.append(flight_info)
                 break
