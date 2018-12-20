@@ -3,13 +3,16 @@ import requests
 from lxml import html
 from collections import OrderedDict
 import argparse
+import datetime
 
 
 def parse(source, destination, date):
-    for i in range(5):
+    for i in range(30):
+        date1 = (datetime.datetime.today() + datetime.timedelta(days=30)).strftime("%m/%d/%Y")
+        print (date1)
         try:
             url = "https://www.expedia.com/Flights-Search?trip=oneway&leg1=from:{0},to:{1},departure:{2}TANYT&passengers=adults:1,children:0,seniors:0,infantinlap:Y&options=cabinclass%3Aeconomy&mode=search&origref=www.expedia.com".format(
-                source, destination, date)
+                source, destination, date1)
             headers = {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36'}
             response = requests.get(url, headers=headers, verify=False)
@@ -18,7 +21,6 @@ def parse(source, destination, date):
             raw_json = json.loads(json_data_xpath[0] if json_data_xpath else '')
             flight_data = json.loads(raw_json["content"])
 
-            flight_info = OrderedDict()
             lists = []
 
             for i in flight_data['legs'].keys():
@@ -56,23 +58,23 @@ def parse(source, destination, date):
                 plane_code = carrier.get('planeCode', '')
                 formatted_price = "{0:.2f}".format(exact_price)
 
-                if not airline_name:
-                    airline_name = carrier.get('operatedBy', '')
-
-                timings = []
-                for timeline in flight_data['legs'][i].get('timeline', {}):
-                    if 'departureAirport' in timeline.keys():
-                        departure_airport = timeline['departureAirport'].get('longName', '')
-                        departure_time = timeline['departureTime'].get('time', '')
-                        arrival_airport = timeline.get('arrivalAirport', {}).get('longName', '')
-                        arrival_time = timeline.get('arrivalTime', {}).get('time', '')
-                        flight_timing = {
-                            'departure_airport': departure_airport,
-                            'departure_time': departure_time,
-                            'arrival_airport': arrival_airport,
-                            'arrival_time': arrival_time
-                        }
-                        timings.append(flight_timing)
+                # if not airline_name:
+                #     airline_name = carrier.get('operatedBy', '')
+                #
+                # timings = []
+                # for timeline in flight_data['legs'][i].get('timeline', {}):
+                #     if 'departureAirport' in timeline.keys():
+                #         departure_airport = timeline['departureAirport'].get('longName', '')
+                #         departure_time = timeline['departureTime'].get('time', '')
+                #         arrival_airport = timeline.get('arrivalAirport', {}).get('longName', '')
+                #         arrival_time = timeline.get('arrivalTime', {}).get('time', '')
+                #         flight_timing = {
+                #             'departure_airport': departure_airport,
+                #             'departure_time': departure_time,
+                #             'arrival_airport': arrival_airport,
+                #             'arrival_time': arrival_time
+                #         }
+                #         timings.append(flight_timing)
 
                 # flight_info = {'stops': stop,
                 #                'ticket price': formatted_price,
@@ -85,26 +87,19 @@ def parse(source, destination, date):
                 #                'plane code': plane_code
                 #                }
                 flight_info = {
-                    'date': date,
+                    'date': date1,
                     'ticket price': formatted_price
                 }
-                lists.append(flight_info)
-            sortedlist = sorted(lists, key=lambda k: k['ticket price'], reverse=False)
-            return sortedlist
+                lists += flight_info
 
         except ValueError:
             print ("Rerying...")
 
-        return {"error": "failed to process the page", }
+    sortedlist = sorted(lists, key=lambda k: k['ticket price'], reverse=False)
+    return sortedlist
 
 
 if __name__ == "__main__":
-    argparser = argparse.ArgumentParser()
-    argparser.add_argument('source', help='Source airport code')
-    argparser.add_argument('destination', help='Destination airport code')
-    argparser.add_argument('date', help='MM/DD/YYYY')
-
-    args = argparser.parse_args()
     source = "sea"
     destination = "mia"
     # Todo change dates
